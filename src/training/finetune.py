@@ -1,6 +1,7 @@
-from model import ReVisionProcessor, ReVisionForConditionalGeneration
-from datautils import RevisionRewriteDataset, SyntheticRewriteDataset, CombinedDataset
-from args import get_args_fine_tuning
+from src.model.processor import ReVisionProcessor
+from src.model.revision_model import ReVisionForConditionalGeneration
+from src.data.dataset import RevisionRewriteDataset
+from src.training.args import get_args_fine_tuning
 from transformers import (
     TrainingArguments,
     Trainer,
@@ -32,40 +33,40 @@ def set_seed(seed):
 
 
 # Define a custom Trainer class
-class CustomTrainer(Trainer):
-    def __init__(self, processor, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.step_count = 0  # Initialize step counter
-        self.processor = processor
+# class CustomTrainer(Trainer):
+#     def __init__(self, processor, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.step_count = 0  # Initialize step counter
+#         self.processor = processor
 
-    def on_step_end(self, args, state, control, **kwargs):
-        self.step_count += 1
-        # Generate samples every 100 steps
-        if self.step_count % 100 == 0:
-            self.generate_samples()
+#     def on_step_end(self, args, state, control, **kwargs):
+#         self.step_count += 1
+#         # Generate samples every 100 steps
+#         if self.step_count % 100 == 0:
+#             self.generate_samples()
 
-    def generate_samples(self):
-        # Define a few input prompts for sample generation
-        image = Image.open(
-            "/home/anon/Desktop/img.jpg"
-        )  # requests.get(url, stream=True).raw)
-        image = image.convert("RGB")
-        # default_size = (100, 100)
-        # default_color = (255, 255, 255)  # White color
-        # image = Image.new("RGB", default_size, default_color)
+#     def generate_samples(self):
+#         # Define a few input prompts for sample generation
+#         image = Image.open(
+#             "/home/anon/Desktop/img.jpg"
+#         )  # requests.get(url, stream=True).raw)
+#         image = image.convert("RGB")
+#         # default_size = (100, 100)
+#         # default_color = (255, 255, 255)  # White color
+#         # image = Image.new("RGB", default_size, default_color)
 
-        # Instruct the model to create a caption in Spanish
-        prompt = "rewrite: who wrote this book?"
-        model_inputs = self.processor(text=prompt, images=image, return_tensors="pt")
-        input_len = model_inputs["input_ids"].shape[-1]
+#         # Instruct the model to create a caption in Spanish
+#         prompt = "rewrite: who wrote this book?"
+#         model_inputs = self.processor(text=prompt, images=image, return_tensors="pt")
+#         input_len = model_inputs["input_ids"].shape[-1]
 
-        with torch.inference_mode():
-            generation = self.model.generate(
-                **model_inputs, max_new_tokens=100, do_sample=False
-            )
-            generation = generation[0][input_len:]
-            decoded = self.processor.decode(generation, skip_special_tokens=True)
-            print(decoded)
+#         with torch.inference_mode():
+#             generation = self.model.generate(
+#                 **model_inputs, max_new_tokens=100, do_sample=False
+#             )
+#             generation = generation[0][input_len:]
+#             decoded = self.processor.decode(generation, skip_special_tokens=True)
+#             print(decoded)
 
 
 def main(args):
@@ -104,14 +105,22 @@ def main(args):
         save_total_limit=args.save_total_limit,
         output_dir=args.output_dir,
         bf16=False,
+        fp16=True,
         gradient_checkpointing=False,
         report_to=["tensorboard"],
         dataloader_pin_memory=False,
         max_grad_norm=1.0,
+        max_steps=2000
     )
 
-    trainer = CustomTrainer(
-        processor=processor,
+    # trainer = CustomTrainer(
+    #     processor=processor,
+    #     model=model,
+    #     train_dataset=dataset1,
+    #     data_collator=dataset1.collate_fn,
+    #     args=trainer_args,
+    # )
+    trainer = Trainer(
         model=model,
         train_dataset=dataset1,
         data_collator=dataset1.collate_fn,
@@ -120,13 +129,12 @@ def main(args):
     trainer.train()
     model.save_pretrained(args.output_dir)
     processor.save_pretrained(args.output_dir)
-    print("Pushing to hub")
-    model.push_to_hub(
-        "anonymoususerrevision/ReVision-250M-256-16-baseline", use_auth_token=use_auth_token
-    )
-    processor.push_to_hub(
-        "anonymoususerrevision/ReVision-250M-256-16-baseline", use_auth_token=use_auth_token
-    )
+    # model.push_to_hub(
+    #     "anonymoususerrevision/ReVision-250M-256-16-baseline", use_auth_token=use_auth_token
+    # )
+    # processor.push_to_hub(
+    #     "anonymoususerrevision/ReVision-250M-256-16-baseline", use_auth_token=use_auth_token
+    # )
 
     # print("training complete")
 

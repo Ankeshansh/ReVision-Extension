@@ -18,8 +18,8 @@ from transformers.utils import (
     logging,
     replace_return_docstrings,
 )
-from .configuration_revision import ReVisionConfig
-from model.resampler import PerceiverResampler
+from .config import ReVisionConfig
+from .resampler import PerceiverResampler
 
 if is_flash_attn_2_available():
     from flash_attn.bert_padding import index_first_axis, pad_input, unpad_input  # noqa
