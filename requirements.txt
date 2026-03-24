@@ -18,3 +18,5 @@ scikit-learn
 numpy
 
 tensorboard
+nltk
+rouge
