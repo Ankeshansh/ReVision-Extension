@@ -1,5 +1,5 @@
-from model import ReVisionProcessor, ReVisionForConditionalGeneration
-from datautils import RevisionRewriteDataset
+from src.model import ReVisionProcessor, ReVisionForConditionalGeneration
+from src.data.dataset import RevisionRewriteDataset
 from transformers import Trainer
 from torch.utils.data import DataLoader
 import pandas as pd
@@ -11,6 +11,8 @@ from PIL import Image
 
 # Model ID and auth token setup
 MODEL_ID = "anonymoususerrevision/ReVision-250M-256-16-baseline"
+# MODEL_ID = "/content/drive/MyDrive/revision-baseline"
+
 use_auth_token = os.getenv("HF_TOKEN")
 
 def set_seed(seed):
@@ -49,7 +51,7 @@ def collate_fn(self, examples, to_bf16=True):
         tokenize_newline_separately=False,
     )
 
-    if to_bf16:
+    if to_bf16 and torch.cuda.is_available():
         tokens = tokens.to(torch.bfloat16)
     
     return tokens
