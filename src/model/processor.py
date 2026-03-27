@@ -132,6 +132,7 @@ class ReVisionProcessor(ProcessorMixin):
         tokenizer.add_bos_token = False
         tokenizer.add_eos_token = False
         tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.padding_side = "left"
         # print("image token id", self.image_token_id)
         # print("bos", tokenizer.bos_token)
         # print("eos", tokenizer.eos_token)

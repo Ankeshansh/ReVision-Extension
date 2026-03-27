@@ -303,6 +303,8 @@ class RevisionRewriteDataset(Dataset):
             suffix=labels,
             return_tensors="pt",
             padding="longest",
+            truncation=True,
+            max_length=512,
             tokenize_newline_separately=False,
         )
 
@@ -311,98 +313,98 @@ class RevisionRewriteDataset(Dataset):
         return tokens
 
 
-class RevisionRewriteDatasetWithMetadata(Dataset):
-    def __init__(
-        self,
-        dataset_name="anonymoususerrevision/multimodal_query_rewrites",
-        split="train",
-        filename_suffix="_with_metadata",
-        use_auth_token=None,
-        processor=None,
-        add_image_prefix=False,
-    ):
-        self.processor = processor
-        self.image_zip_path = hf_hub_download(
-            repo_id=dataset_name,
-            filename="images.zip",
-            repo_type="dataset",
-            use_auth_token=use_auth_token,
-        )
-        self.dataset_path = hf_hub_download(
-            repo_id=dataset_name,
-            filename=f"{split}{filename_suffix}.tsv",  # train or test
-            repo_type="dataset",
-            use_auth_token=use_auth_token,
-        )
+# class RevisionRewriteDatasetWithMetadata(Dataset):
+#     def __init__(
+#         self,
+#         dataset_name="anonymoususerrevision/multimodal_query_rewrites",
+#         split="train",
+#         filename_suffix="_with_metadata",
+#         use_auth_token=None,
+#         processor=None,
+#         add_image_prefix=False,
+#     ):
+#         self.processor = processor
+#         self.image_zip_path = hf_hub_download(
+#             repo_id=dataset_name,
+#             filename="images.zip",
+#             repo_type="dataset",
+#             use_auth_token=use_auth_token,
+#         )
+#         self.dataset_path = hf_hub_download(
+#             repo_id=dataset_name,
+#             filename=f"{split}{filename_suffix}.tsv",  # train or test
+#             repo_type="dataset",
+#             use_auth_token=use_auth_token,
+#         )
 
-        with open(self.dataset_path) as f:
-            self.dataset = pd.read_csv(self.dataset_path, sep="\t")
-            print(f"length of data {len(self.dataset)}")
+#         with open(self.dataset_path) as f:
+#             self.dataset = pd.read_csv(self.dataset_path, sep="\t")
+#             print(f"length of data {len(self.dataset)}")
 
-        self.image_extract_path = os.path.join(
-            os.path.dirname(self.image_zip_path), "images"
-        )
+#         self.image_extract_path = os.path.join(
+#             os.path.dirname(self.image_zip_path), "images"
+#         )
 
-        if not os.path.exists(self.image_extract_path):
-            print(f"Extracting image to {self.image_extract_path}")
-            with zipfile.ZipFile(self.image_zip_path, "r") as zip_ref:
-                zip_ref.extractall(self.image_extract_path)
-        self.add_image_prefix = add_image_prefix
+#         if not os.path.exists(self.image_extract_path):
+#             print(f"Extracting image to {self.image_extract_path}")
+#             with zipfile.ZipFile(self.image_zip_path, "r") as zip_ref:
+#                 zip_ref.extractall(self.image_extract_path)
+#         self.add_image_prefix = add_image_prefix
 
-    def __len__(self):
-        return len(self.dataset)
+#     def __len__(self):
+#         return len(self.dataset)
 
-    def __getitem__(self, idx):
-        # Get the data entry
-        data = self.dataset.iloc[idx]
+#     def __getitem__(self, idx):
+#         # Get the data entry
+#         data = self.dataset.iloc[idx]
 
-        # Process image file path
-        image_file = data["Image Id"] + ".jpg"
+#         # Process image file path
+#         image_file = data["Image Id"] + ".jpg"
 
-        image_path = os.path.join(self.image_extract_path, "images", image_file)
-        image = Image.open(image_path).convert("RGB")
+#         image_path = os.path.join(self.image_extract_path, "images", image_file)
+#         image = Image.open(image_path).convert("RGB")
 
-        # Process prompt and response from conversation
-        prompt = data["Prompt"]
-        response = data["Rewritten Question"]
-        caption = data["Caption"]
-        ocr_text = str(data["OCRText"])
+#         # Process prompt and response from conversation
+#         prompt = data["Prompt"]
+#         response = data["Rewritten Question"]
+#         caption = data["Caption"]
+#         ocr_text = str(data["OCRText"])
 
-        # Append Prompt with "<task>" tag
-        if self.add_image_prefix:
-            prompt = f"<image> {prompt}"
-        prompt = "<task> " + prompt
+#         # Append Prompt with "<task>" tag
+#         if self.add_image_prefix:
+#             prompt = f"<image> {prompt}"
+#         prompt = "<task> " + prompt
 
-        data_section = "<data> " + caption
-        if len(ocr_text) > 0:
-            data_section += " The text in the image is: " + ocr_text
+#         data_section = "<data> " + caption
+#         if len(ocr_text) > 0:
+#             data_section += " The text in the image is: " + ocr_text
 
-        prompt_with_metadata = prompt + data_section
+#         prompt_with_metadata = prompt + data_section
 
-        return image, prompt_with_metadata, response
+#         return image, prompt_with_metadata, response
 
-    # Define the collate function
-    def collate_fn(self, examples, to_bf16=True):
-        # Separate images, prompts, and responses
+#     # Define the collate function
+#     def collate_fn(self, examples, to_bf16=True):
+#         # Separate images, prompts, and responses
 
-        texts = [example[1].replace("\n", "") for example in examples]  # Prompt
-        labels = [example[2].replace("\n", "") for example in examples]  # Response
-        images = [
-            example[0].convert("RGB") for example in examples
-        ]  # Convert images to RGB
+#         texts = [example[1].replace("\n", "") for example in examples]  # Prompt
+#         labels = [example[2].replace("\n", "") for example in examples]  # Response
+#         images = [
+#             example[0].convert("RGB") for example in examples
+#         ]  # Convert images to RGB
 
-        tokens = self.processor(
-            text=texts,
-            images=images,
-            suffix=labels,
-            return_tensors="pt",
-            padding="longest",
-            tokenize_newline_separately=False,
-        )
+#         tokens = self.processor(
+#             text=texts,
+#             images=images,
+#             suffix=labels,
+#             return_tensors="pt",
+#             padding="longest",
+#             tokenize_newline_separately=False,
+#         )
 
-        if to_bf16 and torch.cuda.is_available():
-            tokens = tokens.to(torch.bfloat16)
-        return tokens
+#         if to_bf16 and torch.cuda.is_available():
+#             tokens = tokens.to(torch.bfloat16)
+#         return tokens
 
 
 # class CombinedDataset(Dataset):

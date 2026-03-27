@@ -6,7 +6,7 @@ def get_args_fine_tuning():
     parser = argparse.ArgumentParser(description="Training Arguments Parser")
 
     parser.add_argument(
-        "--num_train_epochs", type=int, default=2, help="Number of training epochs"
+        "--num_train_epochs", type=int, default=5, help="Number of training epochs"
     )
     parser.add_argument(
         "--remove_unused_columns",
@@ -17,17 +17,17 @@ def get_args_fine_tuning():
     parser.add_argument(
         "--per_device_train_batch_size",
         type=int,
-        default=2,
+        default=16,
         help="Batch size per device during training",
     )
     parser.add_argument(
         "--gradient_accumulation_steps",
         type=int,
-        default=4,
+        default=1,
         help="Number of gradient accumulation steps",
     )
     parser.add_argument(
-        "--warmup_steps", type=int, default=50, help="Number of warmup steps"
+        "--warmup_steps", type=int, default=10, help="Number of warmup steps"
     )
     parser.add_argument(
         "--learning_rate", type=float, default=2e-5, help="Learning rate"
@@ -40,7 +40,7 @@ def get_args_fine_tuning():
         help="Beta2 parameter for Adam optimizer",
     )
     parser.add_argument(
-        "--logging_steps", type=int, default=100, help="Log every X updates steps"
+        "--logging_steps", type=int, default=50, help="Log every X updates steps"
     )
     parser.add_argument(
         "--optim", type=str, default="adamw_torch", help="Optimizer to use"
@@ -48,7 +48,7 @@ def get_args_fine_tuning():
     parser.add_argument(
         "--save_strategy",
         type=str,
-        default="steps",
+        default="epoch",
         help="The checkpoint save strategy",
     )
     parser.add_argument(
@@ -63,7 +63,7 @@ def get_args_fine_tuning():
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="revision_v1",
+        default="revision_baseline",
         help="The output directory where the model checkpoints will be written",
     )
     parser.add_argument(
