@@ -73,7 +73,8 @@ def main(args):
         fp16=True,
         gradient_checkpointing=True,
         report_to=["tensorboard"],
-        dataloader_pin_memory=False,
+        dataloader_num_workers=4,
+        dataloader_pin_memory=True,
         max_grad_norm=1.0,
         max_steps=-1
     )
