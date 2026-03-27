@@ -61,7 +61,7 @@ def main(args):
         learning_rate=args.learning_rate,
         weight_decay=args.weight_decay,
         adam_beta2=args.adam_beta2,
-        evaluation_strategy="steps",
+        evaluation_strategy="no",
         logging_strategy="steps",
         logging_steps=args.logging_steps,
         optim=args.optim,
